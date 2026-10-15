@@ -1,0 +1,516 @@
+<title>Sondage Famylio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: une colonne éditoriale. Film en tête, présentation, sondage pas à pas, puis un tableau de bord réservé à l'éditeur.
+   Palette « Terre & Verre » de la charte Famylio v3 : crème, sauge, un seul filet d'or par écran. */
+:root{
+  --bg:#F5F0E4; --surface:#FBF8F1; --surface2:#EDE6D6;
+  --ink:#1F1B12; --ink2:#4A4335; --muted:#6B6252;
+  --sage:#2E4A32; --sage2:#4C6B48; --on-sage:#FBF8F1;
+  --gold:#C39B54; --gold-text:#8A6B22;
+  --line:rgba(60,48,22,.15); --shadow:rgba(60,48,22,.16); --track:rgba(60,48,22,.09);
+  --glass:rgba(251,248,241,.74);
+  --dv1:#347D48; --dv2:#166DAF; --dv3:#BE7C05; --dv5:#BB533A;
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+  --ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171C19; --surface:#1F2622; --surface2:#262E29;
+  --ink:#F3EFE6; --ink2:#D3CCBC; --muted:#A39B89;
+  --sage:#7FA878; --sage2:#9DB79A; --on-sage:#10150F;
+  --gold:#D8B26B; --gold-text:#D8B26B;
+  --line:rgba(243,239,230,.15); --shadow:rgba(0,0,0,.45); --track:rgba(243,239,230,.09);
+  --glass:rgba(31,38,34,.72);
+  --dv1:#4AA362; --dv2:#3890DB; --dv3:#C88302; --dv5:#DC6A4E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171C19; --surface:#1F2622; --surface2:#262E29;
+  --ink:#F3EFE6; --ink2:#D3CCBC; --muted:#A39B89;
+  --sage:#7FA878; --sage2:#9DB79A; --on-sage:#10150F;
+  --gold:#D8B26B; --gold-text:#D8B26B;
+  --line:rgba(243,239,230,.15); --shadow:rgba(0,0,0,.45); --track:rgba(243,239,230,.09);
+  --glass:rgba(31,38,34,.72);
+  --dv1:#4AA362; --dv2:#3890DB; --dv3:#C88302; --dv5:#DC6A4E; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--ui);margin:0;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden}
+h1,h2,h3{font-family:var(--display);font-weight:500;letter-spacing:-.02em;margin:0;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--sage);outline-offset:3px;border-radius:6px}
+.wrap{width:100%;max-width:1080px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+
+/* Aurore + grain */
+.aurora{position:absolute;inset:0 0 auto 0;height:980px;overflow:hidden;pointer-events:none;z-index:0}
+.aurora i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+.aurora i:nth-child(1){width:560px;height:560px;left:-120px;top:-140px;background:radial-gradient(circle,var(--gold) 0%,transparent 68%);opacity:.32}
+.aurora i:nth-child(2){width:640px;height:640px;right:-180px;top:60px;background:radial-gradient(circle,var(--sage2) 0%,transparent 68%);opacity:.26}
+.aurora::after{content:"";position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .4 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+@media (prefers-reduced-motion:no-preference){
+  .aurora i:nth-child(1){animation:drift1 26s ease-in-out infinite alternate}
+  .aurora i:nth-child(2){animation:drift2 32s ease-in-out infinite alternate}
+}
+@keyframes drift1{to{transform:translate(120px,80px) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-140px,60px) scale(.94)}}
+
+/* En-tête */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
+.logo{font-family:var(--display);font-weight:500;font-size:1.5rem;letter-spacing:-.035em;color:var(--sage);text-decoration:none}
+.top nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.navlink{font-size:.9rem;color:var(--ink2);text-decoration:none;padding:8px 10px;border-radius:8px}
+.navlink:hover{background:var(--track)}
+.btn{appearance:none;border:1px solid transparent;border-radius:999px;padding:12px 22px;font-weight:600;font-size:.95rem;cursor:pointer;background:var(--sage);color:var(--on-sage);transition:transform .15s ease,box-shadow .2s ease,opacity .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px -8px var(--shadow)}
+.btn:active{transform:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{background:var(--track)}
+.btn.sm{padding:8px 14px;font-size:.85rem}
+
+/* Héros */
+main{position:relative;z-index:1}
+.hero{padding-block:clamp(32px,6vw,72px) 24px;position:relative;z-index:1}
+.eyebrow{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-text);font-weight:600}
+h1{font-size:clamp(2rem,5.2vw,3.7rem);line-height:1.08;margin:14px 0 22px;max-width:18em}
+h1 em{font-style:italic;color:var(--sage)}
+.rule{width:72px;height:2px;background:var(--gold);border-radius:2px;margin-bottom:30px}
+.player{position:relative;border-radius:20px;overflow:hidden;background:#10150F;box-shadow:0 30px 60px -28px var(--shadow),0 0 0 1px var(--line);aspect-ratio:16/9;max-width:100%}
+.player video{display:block;width:100%;height:100%;object-fit:cover;background:#10150F}
+.cap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .rise{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+  .d1{animation-delay:.08s}.d2{animation-delay:.2s}.d3{animation-delay:.34s}.d4{animation-delay:.5s}.d5{animation-delay:.66s}
+  .pre{opacity:0;transform:translateY(22px)}
+  .reveal{transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+/* Présentation */
+.sec{padding-block:clamp(40px,7vw,84px) 8px}
+.sec h2{font-size:clamp(1.6rem,3.4vw,2.4rem);line-height:1.15;margin-bottom:10px}
+.lead{color:var(--ink2);max-width:42rem;font-size:1.05rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:30px}
+.card{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 18px 34px -26px var(--shadow);transition:transform .3s ease,box-shadow .3s ease}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.card{background:var(--surface)}}
+.card:hover{transform:translateY(-4px);box-shadow:0 26px 40px -26px var(--shadow)}
+.card svg{width:34px;height:34px;color:var(--sage);margin-bottom:14px}
+.card h3{font-size:1.2rem;margin-bottom:6px}
+.card p{font-size:.93rem;color:var(--ink2)}
+.vision{margin-top:26px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.vision div{padding:16px 18px;border-radius:14px;background:var(--surface2);font-size:.92rem;color:var(--ink2)}
+.vision b{display:block;color:var(--ink);font-weight:600;margin-bottom:2px}
+
+/* Sondage */
+.survey{margin-top:30px;background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 60px -36px var(--shadow);overflow:hidden}
+.prog{height:5px;background:var(--track);position:relative}
+.prog i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--sage2),var(--sage));border-radius:0 5px 5px 0;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.sv-body{padding:clamp(22px,4vw,44px);min-height:420px;display:flex;flex-direction:column}
+.qmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.qpart{color:var(--gold-text);font-weight:600}
+.qt{font-size:clamp(1.35rem,2.8vw,1.85rem);line-height:1.22;margin-bottom:8px}
+.qs{color:var(--muted);font-size:.92rem;margin-bottom:6px}
+.opts{display:grid;gap:10px;margin-top:20px}
+@media (min-width:760px){.opts.two{grid-template-columns:1fr 1fr}}
+.opt{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;cursor:pointer;background:var(--bg);transition:border-color .2s,background .2s,transform .15s}
+.opt:hover{border-color:var(--sage2);transform:translateX(2px)}
+.opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.box{flex:none;width:22px;height:22px;border:2px solid var(--muted);border-radius:50%;display:grid;place-items:center;transition:all .2s}
+.multi .box{border-radius:7px}
+.box::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--on-sage);transform:scale(0);transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.multi .box::after{width:6px;height:11px;border:solid var(--on-sage);border-width:0 2.5px 2.5px 0;border-radius:0;background:none;transform:rotate(45deg) scale(0) translate(-1px,-1px)}
+.opt input:checked + .box{background:var(--sage);border-color:var(--sage)}
+.opt input:checked + .box::after{transform:scale(1)}
+.multi .opt input:checked + .box::after{transform:rotate(45deg) scale(1) translate(-1px,-1px)}
+.opt:has(input:checked){border-color:var(--sage);background:color-mix(in srgb,var(--sage) 9%,var(--bg))}
+.opt:has(input:focus-visible){outline:2px solid var(--sage);outline-offset:2px}
+.ot{font-size:.98rem}
+.field{width:100%;margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+.field:focus{outline:2px solid var(--sage);outline-offset:1px;border-color:transparent}
+textarea.field{min-height:140px;resize:vertical}
+.note{font-size:.85rem;color:var(--muted);margin-top:12px;min-height:1.3em}
+.note.warn{color:var(--dv5)}
+.gbox{margin-top:16px;display:grid;gap:12px}
+.glegend{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);gap:10px}
+.grow{padding:12px 0;border-top:1px solid var(--line)}
+.gl{font-size:.95rem;margin-bottom:8px}
+.gscale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.gp{position:relative;display:block}
+.gp input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.gp span{display:block;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:10px;font-weight:600;font-size:.9rem;color:var(--ink2);transition:all .18s;background:var(--bg)}
+.gp:hover span{border-color:var(--sage2)}
+.gp input:checked + span{background:var(--sage);color:var(--on-sage);border-color:var(--sage)}
+.gp input:focus-visible + span{outline:2px solid var(--sage);outline-offset:2px}
+.nav{margin-top:auto;padding-top:28px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.qwrap{animation:slideIn .45s cubic-bezier(.2,.7,.2,1) both}
+.qwrap.back{animation-name:slideBack}
+@keyframes slideIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.qwrap{animation:none}}
+.intro h3{font-size:clamp(1.5rem,3vw,2.1rem);margin-bottom:10px}
+.facts{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 22px}
+.facts span{padding:7px 14px;border-radius:999px;background:var(--surface2);font-size:.88rem;color:var(--ink2)}
+.banner{padding:12px 16px;border-radius:12px;background:color-mix(in srgb,var(--dv3) 14%,var(--bg));border:1px solid color-mix(in srgb,var(--dv3) 40%,transparent);font-size:.9rem;margin-bottom:16px}
+.thanks{text-align:center;margin:auto;padding:20px 0}
+.thanks h3{font-size:clamp(1.6rem,3.2vw,2.3rem);margin:18px 0 8px}
+.tick{width:84px;height:84px}
+.tick circle{fill:none;stroke:var(--sage);stroke-width:3;stroke-dasharray:252;stroke-dashoffset:252;animation:dash .8s .1s ease forwards}
+.tick path{fill:none;stroke:var(--gold);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:dash .5s .75s ease forwards}
+@keyframes dash{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.tick circle,.tick path{animation:none;stroke-dashoffset:0}}
+footer{padding-block:48px 64px;color:var(--muted);font-size:.85rem}
+
+/* Tableau de bord */
+.dash{padding-block:36px 72px}
+.dh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.dh h2{font-size:clamp(1.7rem,3.4vw,2.5rem)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:.85rem;cursor:pointer;color:var(--ink2)}
+.chip[aria-pressed="true"]{background:var(--sage);color:var(--on-sage);border-color:var(--sage)}
+.sw{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--ink2);margin-left:6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi b{display:block;font-family:var(--display);font-weight:500;font-size:1.9rem;letter-spacing:-.02em;line-height:1.1}
+.kpi span{display:block;font-size:.78rem;line-height:1.35;color:var(--muted);margin-top:4px}
+.dsec{margin-top:30px}
+.dsec>h3{font-size:1.4rem;margin-bottom:4px}
+.dsec>.sub{color:var(--muted);font-size:.9rem;margin-bottom:14px}
+.dgrid{align-items:start;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.panel h4{font-family:var(--ui);font-size:.92rem;font-weight:600;margin:0 0 12px;line-height:1.3}
+.bars{display:grid;gap:7px}
+.brow{display:grid;grid-template-columns:minmax(90px,38%) 1fr 72px;align-items:center;gap:10px;font-size:.84rem;cursor:default}
+.bl{color:var(--ink2);line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.bt{height:14px;background:var(--track);border-radius:0 7px 7px 0;position:relative;min-width:0}
+.bt i{position:absolute;inset:0 auto 0 0;background:var(--dv1);border-radius:0 5px 5px 0;transition:width .5s ease}
+.bt.t2 i{background:var(--dv2)} .bt.t3 i{background:var(--dv3)}
+.bv{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap;text-align:right}
+.bv small{font-weight:400;color:var(--muted);margin-left:6px}
+.brow:hover .bt{background:color-mix(in srgb,var(--track) 60%,var(--ink) 8%)}
+.nn{margin-top:10px;font-size:.76rem;color:var(--muted)}
+.empty{color:var(--muted);font-size:.88rem}
+.stack{display:flex;height:16px;border-radius:5px;overflow:hidden;gap:2px;background:transparent}
+.stack i{display:block;min-width:0;cursor:default}
+.srow{display:grid;grid-template-columns:minmax(120px,36%) 1fr 44px;gap:10px;align-items:center;font-size:.84rem;margin-bottom:9px}
+.srow .mean{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.leg{display:flex;gap:12px;flex-wrap:wrap;font-size:.76rem;color:var(--muted);margin-bottom:12px}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+svg.ch{width:100%;height:auto;display:block;overflow:visible}
+svg.ch text{fill:var(--muted);font:11px var(--ui)}
+svg.ch .grid{stroke:var(--line);stroke-width:1}
+svg.ch .ln{fill:none;stroke:var(--dv2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+svg.ch .ar{fill:var(--dv2);opacity:.12}
+svg.ch .pt{fill:var(--dv2);stroke:var(--surface);stroke-width:2}
+svg.ch .hit{fill:transparent}
+.tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:.76rem;padding:6px 8px;border-bottom:1px solid var(--line)}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tbl .r{text-align:right}
+.scroll{overflow-x:auto}
+.insight{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--surface2);font-size:.88rem;color:var(--ink2)}
+.resp{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-bottom:8px}
+.resp summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:2.2em 1fr auto;gap:8px 12px;align-items:center;padding:10px 14px;font-size:.88rem}
+.resp summary::-webkit-details-marker{display:none}
+.resp .meta{color:var(--muted);font-size:.8rem}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.74rem;font-weight:600;border:1px solid var(--line)}
+.pill.ok{color:var(--dv1);border-color:color-mix(in srgb,var(--dv1) 45%,transparent)}
+.pill.part{color:var(--dv3);border-color:color-mix(in srgb,var(--dv3) 45%,transparent)}
+.rd{padding:6px 14px 14px}
+.quote{padding:12px 14px;border-radius:12px;background:var(--surface2);font-size:.9rem;margin-bottom:8px;overflow-wrap:anywhere}
+.quote small{display:block;color:var(--muted);margin-top:4px}
+#tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:8px;font-size:.8rem;max-width:280px;opacity:0;transition:opacity .12s;box-shadow:0 8px 20px -8px var(--shadow)}
+</style>
+
+<div class="aurora" aria-hidden="true"><i></i><i></i></div>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="logo" href="#top" id="logoLink">Famylio</a>
+    <nav>
+      <a class="navlink" href="#sondage" id="navSurvey">Le sondage</a>
+    </nav>
+  </div>
+</header>
+<main id="top">
+<div id="pub">
+  <section class="hero wrap">
+    <p class="eyebrow rise d1">Famylio · family office numérique</p>
+    <h1 class="rise d2">Les grandes fortunes ont un bureau qui veille sur tout ce qu’elles possèdent. <em>Famylio, c’est le vôtre.</em></h1>
+    <div class="rule rise d3"></div>
+    <div class="player rise d4"><video id="film" controls playsinline preload="metadata" poster="poster.jpg" src="film.mp4"></video></div>
+    <div class="cap rise d5"><span>Le film de présentation, 1 min 22</span><span>Données fictives, à titre d’illustration</span></div>
+  </section>
+
+  <section class="sec wrap pre reveal" data-reveal>
+    <h2>Un seul endroit pour tout comprendre</h2>
+    <p class="lead">Un acte chez le notaire, une police d’assurance dans un tiroir, un 3e pilier à la banque, de l’immobilier, des placements. Famylio réunit tout cela et vous aide à le comprendre.</p>
+    <div class="cards">
+      <article class="card"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="17" rx="3"/><path d="M10 9V7a6 6 0 0 1 12 0v2"/><circle cx="16" cy="17.5" r="2.2"/><path d="M16 19.7V22"/></svg><h3>Un coffre-fort</h3><p>Vos documents officiels classés au même endroit, et lus pour en extraire les chiffres clés.</p></article>
+      <article class="card"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4l11 8-4 13H9L5 12z"/><path d="M16 4v10l9 3M16 14L7 17M16 14l-3.5 11M16 14l3.5 11"/></svg><h3>Une photo de votre patrimoine</h3><p>Ce que vous possédez, ce que vous devez, vos points forts et vos points faibles, en un coup d’œil.</p></article>
+      <article class="card"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="24" r="2.5"/><circle cx="25" cy="8" r="2.5"/><path d="M9.2 22.6C15 20 11 12 16 10.5s6.5-1.5 6.8-1.2M9.4 25c7 1 12-3 15-12"/></svg><h3>Vos objectifs, plusieurs chemins</h3><p>Acheter, transmettre, préparer la retraite. Plusieurs pistes avec leurs avantages et leurs limites. Vous choisissez.</p></article>
+      <article class="card"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8a3 3 0 0 1 3-3h16a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H15l-6 5v-5H8a3 3 0 0 1-3-3z"/><path d="M11 11h10M11 15h6"/></svg><h3>Un assistant</h3><p>Posez vos questions en langage naturel et obtenez une réponse avec ses sources.</p></article>
+    </div>
+    <div class="vision">
+      <div><b>Notre vision</b>Ce que les grandes fortunes obtiennent d’un family office doit être accessible à chacun.</div>
+      <div><b>Aucun produit à vendre</b>Vous payez un abonnement, rien d’autre. Aucun conflit d’intérêt.</div>
+      <div><b>Vous gardez la main</b>Rien n’est intégré sans votre accord, et chaque chiffre est explicable.</div>
+      <div><b>Il décrit, il n’impose rien</b>Famylio éclaire vos choix. Il ne remplace ni votre banquier, ni votre notaire, ni votre fiscaliste.</div>
+    </div>
+  </section>
+
+  <section class="sec wrap pre reveal" id="sondage" data-reveal>
+    <h2>Votre avis, en 5 minutes</h2>
+    <p class="lead">Dites-nous si Famylio répondrait à un vrai besoin, et ce qui pourrait vous freiner.</p>
+    <div class="survey" id="survey">
+      <div class="prog"><i id="progBar"></i></div>
+      <div class="sv-body" id="stage"></div>
+    </div>
+  </section>
+  <footer class="wrap">Famylio · conçu à Lausanne. Vos réponses sont traitées de façon confidentielle et servent uniquement à cette étude.</footer>
+</div>
+
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function cap(n){try{return (await window.claude?.use?.(n))||null}catch(e){return null}}
+
+/* ---------- Questionnaire ---------- */
+const SCALE=['Pas du tout','Peu','Neutre','Plutôt','Tout à fait'];
+const Q=[
+{k:'q1',part:'Votre profil',t:'Votre âge',type:'single',o:['Moins de 25 ans','25–34 ans','35–44 ans','45–54 ans','55–64 ans','65 ans et plus']},
+{k:'q2',part:'Votre profil',t:'Votre situation familiale',type:'single',o:['Seul(e), sans enfant','En couple, sans enfant','En couple, avec enfant(s)','Famille monoparentale','Autre']},
+{k:'q3',part:'Votre profil',t:'Votre logement',type:'single',o:['Locataire','Propriétaire de ma résidence principale','Propriétaire de plusieurs biens immobiliers','Projet d’achat dans les 3 ans']},
+{k:'q4',part:'Votre profil',t:'Votre patrimoine total approximatif',sub:'Épargne, placements, immobilier net, 2e et 3e piliers. Facultatif.',type:'single',o:['Moins de 50’000 CHF','50’000 – 200’000 CHF','200’000 – 500’000 CHF','500’000 – 1’000’000 CHF','Plus de 1’000’000 CHF','Je préfère ne pas répondre']},
+{k:'q5',part:'Aujourd’hui',t:'Où se trouvent vos informations patrimoniales ?',sub:'Plusieurs réponses possibles.',type:'multi',o:['Dans plusieurs banques ou applications','2e pilier (caisse de pension) et 3e pilier','Immobilier (actes, hypothèque)','Assurances (vie, maladie, ménage, etc.)','Crypto ou plateformes de courtage en ligne','Biens de valeur (véhicule, montres, art, etc.)','Papiers conservés à la maison','Je ne sais pas toujours où se trouve chaque élément']},
+{k:'q6',part:'Aujourd’hui',t:'Comment suivez-vous votre patrimoine aujourd’hui ?',sub:'Plusieurs réponses possibles.',type:'multi',other:5,o:['Je ne le suis pas vraiment','Je consulte mes applications bancaires','Un tableur (Excel, Google Sheets)','Une application de suivi de patrimoine','Mon banquier, mon gestionnaire ou ma fiduciaire','Autre']},
+{k:'q7',part:'Aujourd’hui',t:'Avez-vous déjà eu du mal à retrouver un document important quand vous en aviez besoin ?',sub:'Acte, police, certificat de prévoyance…',type:'single',o:['Souvent','Parfois','Rarement','Jamais']},
+{k:'q8',part:'Aujourd’hui',t:'Avez-vous déjà posé une question d’argent, d’impôts ou de droit à un assistant IA ?',sub:'ChatGPT, Claude, Gemini, etc.',type:'single',o:['Oui, régulièrement','Oui, une ou deux fois','Non, mais cela m’intéresse','Non, et je m’en méfie']},
+{k:'q9',part:'Votre intérêt',t:'Après la présentation, à quel point cet outil vous intéresse-t-il ?',type:'single',o:['1 – Pas du tout','2 – Peu','3 – Moyennement','4 – Beaucoup','5 – Très fortement']},
+{k:'q10',part:'Votre intérêt',t:'Quelles fonctions vous seraient les plus utiles ?',sub:'Maximum 3.',type:'multi',max:3,o:['Le coffre-fort : tous mes documents au même endroit','La photo de mon patrimoine : ce que je possède, ce que je dois','Des pistes pour atteindre mes objectifs (achat, retraite, transmission)','Un assistant qui répond à mes questions, avec ses sources','Un budget et un suivi de mes dépenses','Un accompagnement lors des événements de vie (mariage, naissance, héritage, divorce)','Une mise en relation avec des spécialistes (notaire, fiscaliste, avocat)','La préparation de la succession et la transmission à mes proches']},
+{k:'q11',part:'Votre intérêt',t:'À quelle occasion l’utiliseriez-vous en premier ?',type:'single',other:6,o:['Achat ou vente d’un bien immobilier','Mariage, naissance ou divorce','Héritage ou donation','Préparation de la retraite','Mettre de l’ordre dans mes papiers et mes comptes','Déclaration d’impôts','Autre']},
+{k:'q12',part:'Votre intérêt',t:'Seriez-vous prêt(e) à utiliser un outil comme Famylio dans les 12 prochains mois ?',type:'single',o:['Oui, certainement','Probablement','Peut-être','Probablement pas','Non, certainement pas']},
+{k:'q13',part:'Vos réserves',t:'Pour chaque situation, à quel point seriez-vous à l’aise ?',sub:'Pour fonctionner pleinement, Famylio a besoin de vos documents et de quelques informations personnelles. Vos réserves guident ce que nous construisons.',type:'grid',rows:['Déposer mes documents officiels (acte de vente, certificat de prévoyance, contrats)','Photographier ou téléverser mes relevés bancaires','Qu’une IA lise mes documents pour en extraire les chiffres','Répondre à environ 20 questions sur ma situation familiale et patrimoniale','Connecter directement mes comptes bancaires','Que mes données soient conservées en ligne (cloud)','Poser mes questions d’argent à une IA plutôt qu’à une personne']},
+{k:'q14',part:'Vos réserves',t:'Quels sont vos deux plus grands freins ?',sub:'Maximum 2.',type:'multi',max:2,other:8,o:['La sécurité de mes données (piratage)','Ne pas savoir qui a accès à mes informations','La crainte que mes données soient revendues ou utilisées à d’autres fins','Le temps nécessaire pour tout importer','La fiabilité des réponses d’une IA','Je préfère parler à une vraie personne','Je n’ai pas assez de patrimoine pour que ça vaille la peine','Le prix','Autre']},
+{k:'q15',part:'Vos réserves',t:'Qu’est-ce qui vous rassurerait le plus ?',sub:'Maximum 3.',type:'multi',max:3,other:8,o:['Données hébergées en Suisse','Chiffrement de mes documents','Pouvoir supprimer définitivement mes données en un clic','La garantie que mes données ne sont ni revendues ni utilisées pour entraîner une IA','Choisir moi-même ce qui est importé et valider chaque chiffre avant qu’il soit enregistré','Des réponses accompagnées de leurs sources, que je peux vérifier','Un audit de sécurité par un tiers indépendant','Un essai gratuit sans engagement','Autre']},
+{k:'q16',part:'Vos réserves',t:'Pourriez-vous commencer sans rien importer, puis ajouter vos documents plus tard ?',sub:'Quelques questions seulement au départ, à votre rythme ensuite.',type:'single',o:['Oui, c’est préférable','Oui, mais je n’ajouterais probablement pas de documents','Non, sans mes documents l’outil ne m’intéresse pas','Je ne sais pas']},
+{k:'q17',part:'Le prix',t:'Quel est le montant maximum que vous accepteriez de payer par mois ?',sub:'Un abonnement, sans publicité et sans produit financier à vendre. Imaginez que l’outil fasse tout ce qui est décrit.',type:'single',o:['0 CHF : je n’utiliserais pas un outil payant','Moins de 5 CHF','5 – 9 CHF','10 – 14 CHF','15 – 19 CHF','20 – 29 CHF','30 CHF ou plus']},
+{k:'q18',part:'Le prix',t:'Quelle formule préféreriez-vous ?',type:'single',o:['Abonnement mensuel, résiliable à tout moment','Abonnement annuel avec un rabais','Un paiement unique, à vie','Je ne paierais pas, quelle que soit la formule']},
+{k:'q19',part:'Le prix',t:'Qu’est-ce qui justifierait de payer davantage ?',sub:'Plusieurs réponses possibles.',type:'multi',o:['Pouvoir partager l’espace avec mon conjoint ou ma famille','Un nombre illimité de questions à l’assistant','La mise en relation avec des spécialistes','La préparation de la succession et de la transmission','Rien, je préfère le prix le plus bas']},
+{k:'q20',part:'Pour terminer',t:'Un commentaire, une attente, une crainte que nous n’avons pas abordés ?',sub:'Facultatif.',type:'text'},
+{k:'q21',part:'Pour terminer',t:'Souhaitez-vous être prévenu(e) du lancement et tester l’application en avant-première ?',sub:'Facultatif. Votre e-mail ne sert qu’à vous informer du lancement.',type:'contact',o:['Oui, voici mon e-mail','Non merci']}
+];
+const QI=Object.fromEntries(Q.map((q,i)=>[q.k,i]));
+
+/* ---------- État du sondage ---------- */
+const FORM_ACTION='https://docs.google.com/forms/d/e/1FAIpQLScOSvMThKSs2alpPyTmU5Aeszqnf4VG7pcpMoMVFnP0wmSO4w/formResponse',FORM_ENTRY='entry.1925632365';
+const SRC=(new URLSearchParams(location.search).get('s')||'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,30);
+const S={i:-1,maxI:-1,mode:'web',id:null,t0:0,doneAt:0,answers:{},times:{},visits:{},changes:{},status:'partial'};
+let tStart=0,cur=-1,dirty=false,saveErr=null;
+const film=$('#film');let vMax=0,vPlays=0;
+film.addEventListener('play',()=>{vPlays++});
+film.addEventListener('timeupdate',()=>{if(film.duration)vMax=Math.max(vMax,film.currentTime/film.duration)});
+
+function resetSurvey(mode){
+  S.i=-1;S.maxI=-1;S.mode=mode||'web';S.id=null;S.t0=0;S.doneAt=0;S.answers={};S.times={};S.visits={};S.changes={};S.status='partial';
+  cur=-1;saveErr=null;dirty=false;
+}
+function flush(){
+  if(cur>=0&&tStart&&document.visibilityState==='visible'&&S.mode==='web'){
+    const k=Q[cur].k;S.times[k]=(S.times[k]||0)+Math.round(performance.now()-tStart);
+  }
+  tStart=0;
+}
+document.addEventListener('visibilitychange',()=>{
+  if(cur<0)return;
+  if(document.visibilityState==='hidden'){flush()}else{tStart=performance.now()}
+});
+window.addEventListener('pagehide',()=>{flush();if(S.id&&S.status==='partial')save()});
+
+function payload(){
+  const act=Object.values(S.times).reduce((a,b)=>a+b,0);
+  return {sid:S.id,status:S.status,source:S.mode,src:SRC,startedAt:S.t0,updatedAt:Date.now(),completedAt:S.doneAt||null,
+    activeMs:act,vid:Math.round(vMax*100),vplays:vPlays,device:innerWidth<760?'mobile':'ordinateur',
+    lastQ:S.maxI,answers:S.answers,times:S.times,visits:S.visits,changes:S.changes};
+}
+async function save(){
+  if(!S.id)return;
+  const body=new URLSearchParams();body.set(FORM_ENTRY,JSON.stringify(payload()));
+  let ok=false;
+  for(let a=0;a<2&&!ok;a++){
+    try{await fetch(FORM_ACTION,{method:'POST',mode:'no-cors',body:body,keepalive:true});ok=true}
+    catch(e){await new Promise(r=>setTimeout(r,800))}
+  }
+  saveErr=ok?null:new Error('network');
+}
+
+/* ---------- Rendu du sondage ---------- */
+const stage=$('#stage'),bar=$('#progBar');
+function setProg(){bar.style.width=(S.i<0?0:Math.min(100,(S.i/Q.length)*100))+'%'}
+function hasAns(k){const a=S.answers[k];if(a==null)return false;if(Array.isArray(a))return a.length>0;if(typeof a==='object')return Object.keys(a).length>0&&(a.c!=null||Object.keys(a).some(x=>x[0]==='r'));if(typeof a==='string')return a.trim()!=='';return true}
+
+function renderIntro(){
+  const blocked=FORM_ACTION.indexOf('__')===0;
+  stage.innerHTML=`<div class="qwrap intro">
+    ${S.mode==='papier'?'<div class="banner">Mode saisie papier : les temps ne sont pas enregistrés. Chaque questionnaire saisi apparaît dans le tableau de bord avec la source « papier ».</div>':''}
+    <p class="qmeta"><span class="qpart">Sondage Famylio</span></p>
+    <h3>Dites-nous ce que vous en pensez.</h3>
+    <p class="lead">Il n’y a pas de bonne ou de mauvaise réponse. Vous pouvez passer toute question qui ne vous parle pas.</p>
+    <div class="facts"><span>${Q.length} questions</span><span>environ 5 minutes</span><span>anonyme</span></div>
+    ${blocked?`<div class="banner">Ce sondage enregistre les réponses via claude.ai. Ouvrez-le depuis le lien d’invitation en étant connecté(e), ou répondez sur la version papier.</div>`:''}
+    <div class="nav"><span></span><button class="btn" id="goBtn" ${blocked?'disabled':''}>Commencer</button></div>
+  </div>`;
+  $('#goBtn').onclick=()=>{
+    S.id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).replace(/[^a-zA-Z0-9-]/g,'');
+    S.t0=Date.now();go(0,'fwd');
+  };
+  setProg();
+}
+
+function optHTML(q){
+  const a=S.answers[q.k];
+  const multi=q.type==='multi';
+  const sel=multi?(a||[]):(a==null?[]:[a]);
+  const other=q.other!=null?`<input class="field" id="otherTxt" maxlength="120" placeholder="Précisez" value="${esc(S.answers[q.k+'_o']||'')}" ${sel.includes(q.other)?'':'hidden'}>`:'';
+  return `<div class="opts ${q.o.length>=5&&q.type!=='contact'&&q.o.every(x=>x.length<46)?'two':''} ${multi?'multi':''}" role="${multi?'group':'radiogroup'}">${
+    q.o.map((t,i)=>`<label class="opt"><input type="${multi?'checkbox':'radio'}" name="${q.k}" value="${i}" ${sel.includes(i)?'checked':''}><span class="box"></span><span class="ot">${esc(t)}</span></label>`).join('')
+  }</div>${other}`;
+}
+function gridHTML(q){
+  const a=S.answers[q.k]||{};
+  return `<div class="gbox"><div class="glegend"><span>1 · ${SCALE[0]}</span><span>5 · ${SCALE[4]}</span></div>${
+    q.rows.map((r,j)=>`<div class="grow"><div class="gl">${esc(r)}</div><div class="gscale" role="radiogroup" aria-label="${esc(r)}">${
+      [1,2,3,4,5].map(v=>`<label class="gp"><input type="radio" name="r${j}" value="${v}" ${a['r'+j]===v?'checked':''}><span title="${SCALE[v-1]}">${v}</span></label>`).join('')
+    }</div></div>`).join('')}</div>`;
+}
+function contactHTML(q){
+  const a=S.answers[q.k]||{};
+  return `<div class="opts"><label class="opt"><input type="radio" name="q21" value="0" ${a.c===0?'checked':''}><span class="box"></span><span class="ot">${q.o[0]}</span></label><label class="opt"><input type="radio" name="q21" value="1" ${a.c===1?'checked':''}><span class="box"></span><span class="ot">${q.o[1]}</span></label></div>
+  <input class="field" id="mail" type="email" autocomplete="email" inputmode="email" placeholder="prenom@exemple.ch" value="${esc(a.e||'')}" ${a.c===0?'':'hidden'}>`;
+}
+
+function go(i,dir){
+  flush();
+  if(i>=Q.length){return finish()}
+  S.i=i;cur=i;S.maxI=Math.max(S.maxI,i);
+  const q=Q[i];S.visits[q.k]=(S.visits[q.k]||0)+1;
+  let body='';
+  if(q.type==='single'||q.type==='multi')body=optHTML(q);
+  else if(q.type==='grid')body=gridHTML(q);
+  else if(q.type==='text')body=`<textarea class="field" id="txt" maxlength="1500" placeholder="Votre réponse">${esc(S.answers[q.k]||'')}</textarea>`;
+  else body=contactHTML(q);
+  const last=i===Q.length-1;
+  stage.innerHTML=`<div class="qwrap ${dir==='back'?'back':''}">
+    ${S.mode==='papier'?'<div class="banner">Saisie papier</div>':''}
+    <div class="qmeta"><span class="qpart">${esc(q.part)}</span><span class="num">Question ${i+1} sur ${Q.length}</span></div>
+    <h3 class="qt">${esc(q.t)}</h3>${q.sub?`<p class="qs">${esc(q.sub)}</p>`:''}
+    ${body}<p class="note" id="note" aria-live="polite"></p>
+    <div class="nav"><button class="btn ghost" id="prevBtn" ${i===0?'disabled':''}>Précédent</button><button class="btn" id="nextBtn"></button></div>
+  </div>`;
+  setProg();updNext();
+  tStart=performance.now();
+  $('#prevBtn').onclick=()=>go(i-1,'back');
+  $('#nextBtn').onclick=()=>{
+    if(q.type==='contact'){const a=S.answers.q21;if(a&&a.c===0&&a.e&&!/^\S+@\S+\.\S+$/.test(a.e)){note('Cette adresse e-mail ne semble pas valide.',true);return}}
+    advance(i)};
+    if(S.i>0){const sv=$('#survey').getBoundingClientRect();if(sv.top<0)$('#survey').scrollIntoView({block:'start',behavior:'smooth'})}
+}
+function note(t,w){const n=$('#note');if(n){n.textContent=t;n.classList.toggle('warn',!!w)}}
+function updNext(){
+  const q=Q[S.i],b=$('#nextBtn');if(!b)return;
+  b.textContent=S.i===Q.length-1?(hasAns(q.k)?'Envoyer mes réponses':'Envoyer'):(hasAns(q.k)?'Suivant':'Passer');
+}
+let autoT=0;
+function advance(i){
+  clearTimeout(autoT);
+  flush();
+  if((i+1)%5===0)save();
+  go(i+1,'fwd');
+}
+function setAns(q,val){
+  const had=hasAns(q.k);
+  S.answers[q.k]=val;
+  if(had)S.changes[q.k]=(S.changes[q.k]||0)+1;
+  updNext();
+}
+stage.addEventListener('change',e=>{
+  const q=Q[S.i];if(!q)return;const t=e.target;
+  if(!(t.type==='radio'||t.type==='checkbox'))return;
+  if(q.type==='single'){
+    if(t.name!==q.k)return;
+    setAns(q,+t.value);
+    const ot=$('#otherTxt');if(ot){ot.hidden=+t.value!==q.other;if(!ot.hidden)ot.focus()}
+    if(q.other==null||+t.value!==q.other){clearTimeout(autoT);autoT=setTimeout(()=>{if(S.i===QI[q.k])advance(S.i)},480)}
+  }else if(q.type==='multi'){
+    const cs=[...stage.querySelectorAll('input[name="'+q.k+'"]:checked')].map(x=>+x.value);
+    if(q.max&&cs.length>q.max){t.checked=false;note('Maximum '+q.max+' réponses. Décochez-en une pour changer.',true);return}
+    note('');setAns(q,cs.sort((a,b)=>a-b));
+    const ot=$('#otherTxt');if(ot){ot.hidden=!cs.includes(q.other)}
+  }else if(q.type==='grid'){
+    const a={...(S.answers[q.k]||{})};a[t.name]=+t.value;setAns(q,a);
+    const done=Object.keys(a).length;note(done<q.rows.length?done+' sur '+q.rows.length+' situations notées':'');
+  }else if(q.type==='contact'){
+    const a={...(S.answers[q.k]||{}),c:+t.value};if(a.c===1)delete a.e;setAns(q,a);
+    const m=$('#mail');m.hidden=a.c!==0;if(!m.hidden)m.focus();
+  }
+});
+stage.addEventListener('input',e=>{
+  const q=Q[S.i];if(!q)return;const t=e.target;
+  if(t.id==='otherTxt'){S.answers[q.k+'_o']=t.value.slice(0,120)}
+  else if(t.id==='txt'){setAns(q,t.value)}
+  else if(t.id==='mail'){const a={...(S.answers[q.k]||{c:0}),e:t.value.trim()};S.answers[q.k]=a;updNext();note('')}
+});
+
+async function finish(){
+  flush();cur=-1;S.i=Q.length;S.status='complete';S.doneAt=Date.now();setProg();bar.style.width='100%';
+  stage.innerHTML=`<div class="thanks qwrap"><svg class="tick" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="40"/><path d="M26 43l11 11 21-24"/></svg><h3>Merci pour votre temps.</h3><p class="lead" style="margin-inline:auto" id="thMsg">Nous enregistrons vos réponses…</p><div class="nav" style="justify-content:center" id="thAct"></div></div>`;
+  await save();
+  const msg=$('#thMsg'),act=$('#thAct');if(!msg)return;
+  if(saveErr){
+    msg.textContent='Vos réponses n’ont pas pu être enregistrées. Vous pouvez réessayer ou les copier pour nous les envoyer.';
+    act.innerHTML='<button class="btn" id="retry">Réessayer</button><button class="btn ghost" id="copyA">Copier mes réponses</button>';
+    $('#retry').onclick=async()=>{msg.textContent='Nouvelle tentative…';await save();finish2()};
+    $('#copyA').onclick=async()=>{const txt=JSON.stringify(S.answers);try{await navigator.clipboard.writeText(txt);$('#copyA').textContent='Copié'}catch(e){$('#copyA').textContent='Copie impossible'}};
+  }else finish2();
+  function finish2(){
+    if(saveErr){msg.textContent='L’enregistrement a encore échoué. Réessayez dans un instant.';return}
+    msg.textContent=S.mode==='papier'?'Réponse papier enregistrée.':'Vos réponses sont enregistrées. Elles nous aident à décider ce que Famylio doit devenir.';
+    if(S.mode==='papier'){act.innerHTML='<button class="btn" id="again">Saisir une autre réponse</button><button class="btn ghost" id="backDash">Retour au tableau de bord</button>';
+      $('#again').onclick=()=>{resetSurvey('papier');renderIntro();$('#goBtn').click()};$('#backDash').onclick=()=>showDash(true)}
+    else act.innerHTML='';
+  }
+}
+
+/* ---------- Apparitions au défilement ---------- */
+function reveals(){
+  const els=[...document.querySelectorAll('[data-reveal]')];
+  if(!('IntersectionObserver' in window)){els.forEach(e=>e.classList.remove('pre'));return}
+  const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.remove('pre');io.unobserve(en.target)}}),{threshold:.05});
+  els.forEach(e=>{if(e.getBoundingClientRect().top<innerHeight*.9)e.classList.remove('pre');else io.observe(e)});
+  setTimeout(()=>els.forEach(e=>e.classList.remove('pre')),4000);
+}
+
+/* ---------- Infobulle ---------- */
+const tip=$('#tip');
+document.addEventListener('mousemove',e=>{
+  const t=e.target.closest&&e.target.closest('[data-tip]');
+  if(!t){tip.style.opacity=0;return}
+  tip.textContent=t.getAttribute('data-tip');tip.style.opacity=1;
+  const w=tip.offsetWidth;let x=e.clientX+14;if(x+w>innerWidth-8)x=e.clientX-w-14;
+  tip.style.left=Math.max(8,x)+'px';tip.style.top=(e.clientY+16)+'px';
+});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(!t||!matchMedia('(hover:none)').matches)return;tip.textContent=t.getAttribute('data-tip');tip.style.opacity=1;tip.style.left='16px';tip.style.top=(e.clientY+16)+'px';setTimeout(()=>tip.style.opacity=0,2200)});
+
+/* ---------- Démarrage ---------- */
+reveals();renderIntro();
+})();
+</script>
