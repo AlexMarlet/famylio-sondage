@@ -64,6 +64,10 @@ button{font:inherit;color:inherit}
 .top nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .navlink{font-size:.9rem;color:var(--ink2);text-decoration:none;padding:8px 10px;border-radius:8px}
 .navlink:hover{background:var(--track)}
+.langsw{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.langsw button{font:inherit;font-size:.78rem;font-weight:600;letter-spacing:.04em;color:var(--ink2);background:transparent;border:0;border-radius:999px;padding:5px 10px;cursor:pointer}
+.langsw button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.langsw button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .btn{appearance:none;border:1px solid transparent;border-radius:999px;padding:12px 22px;font-weight:600;font-size:.95rem;cursor:pointer;background:var(--sage);color:var(--on-sage);transition:transform .15s ease,box-shadow .2s ease,opacity .2s}
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px -8px var(--shadow)}
 .btn:active{transform:none}
@@ -234,6 +238,7 @@ svg.ch .hit{fill:transparent}
     <nav>
       <a class="navlink" href="#sondage" id="navSurvey">Le sondage</a>
     </nav>
+    <div class="langsw" role="group" aria-label="Langue / Language / Sprache"><button type="button" data-l="fr" aria-pressed="true">FR</button><button type="button" data-l="en" aria-pressed="false">EN</button><button type="button" data-l="de" aria-pressed="false">DE</button></div>
   </div>
 </header>
 <main id="top">
@@ -286,6 +291,7 @@ async function cap(n){try{return (await window.claude?.use?.(n))||null}catch(e){
 /* ---------- Questionnaire ---------- */
 const SCALE=['Pas du tout','Peu','Neutre','Plutôt','Tout à fait'];
 const Q=[
+{k:'qr',part:'Votre profil',t:'Où vivez-vous ?',sub:'Cette question nous permet de distinguer les réponses selon le pays de résidence.',type:'single',o:['Je vis en Suisse (quelle que soit ma nationalité)','Je vis à l’étranger et j’ai la nationalité suisse','Je vis en France','Je vis dans un autre pays d’Europe','Je vis hors d’Europe']},
 {k:'q1',part:'Votre profil',t:'Votre âge',type:'single',o:['Moins de 25 ans','25–34 ans','35–44 ans','45–54 ans','55–64 ans','65 ans et plus']},
 {k:'q2',part:'Votre profil',t:'Votre situation familiale',type:'single',o:['Seul(e), sans enfant','En couple, sans enfant','En couple, avec enfant(s)','Famille monoparentale','Autre']},
 {k:'q3',part:'Votre profil',t:'Votre logement',type:'single',o:['Locataire','Propriétaire de ma résidence principale','Propriétaire de plusieurs biens immobiliers','Projet d’achat dans les 3 ans']},
@@ -309,6 +315,107 @@ const Q=[
 {k:'q21',part:'Pour terminer',t:'Souhaitez-vous être prévenu(e) du lancement et tester l’application en avant-première ?',sub:'Facultatif. Votre e-mail ne sert qu’à vous informer du lancement.',type:'contact',o:['Oui, voici mon e-mail','Non merci']}
 ];
 const QI=Object.fromEntries(Q.map((q,i)=>[q.k,i]));
+
+/* ---------- Langues ---------- */
+const LANGS=['fr','en','de'];
+const PARTS={
+ en:{'Votre profil':'Your profile','Aujourd’hui':'Today','Votre intérêt':'Your interest','Vos réserves':'Your reservations','Le prix':'Pricing','Pour terminer':'To finish'},
+ de:{'Votre profil':'Ihr Profil','Aujourd’hui':'Heute','Votre intérêt':'Ihr Interesse','Vos réserves':'Ihre Vorbehalte','Le prix':'Der Preis','Pour terminer':'Zum Schluss'}};
+const SCALES={fr:['Pas du tout','Peu','Neutre','Plutôt','Tout à fait'],en:['Not at all','Slightly','Neutral','Fairly','Completely'],de:['Überhaupt nicht','Wenig','Neutral','Eher','Voll und ganz']};
+const QT={
+en:{
+qr:{t:'Where do you live?',sub:'This question lets us tell responses apart by country of residence.',o:['I live in Switzerland (whatever my nationality)','I live abroad and hold Swiss nationality','I live in France','I live in another European country','I live outside Europe']},
+q1:{t:'Your age',o:['Under 25','25–34','35–44','45–54','55–64','65 or older']},
+q2:{t:'Your family situation',o:['Single, no children','In a couple, no children','In a couple, with children','Single-parent family','Other']},
+q3:{t:'Your housing',o:['Tenant','Owner of my main residence','Owner of several properties','Planning to buy within 3 years']},
+q4:{t:'Your approximate total wealth',sub:'Savings, investments, net real estate, 2nd and 3rd pillars. Optional.',o:['Under CHF 50’000','CHF 50’000 – 200’000','CHF 200’000 – 500’000','CHF 500’000 – 1’000’000','Over CHF 1’000’000','I prefer not to answer']},
+q5:{t:'Where is your wealth information kept?',sub:'Several answers possible.',o:['At several banks or in several apps','2nd pillar (pension fund) and 3rd pillar','Real estate (deeds, mortgage)','Insurance (life, health, household, etc.)','Crypto or online brokerage platforms','Valuables (vehicle, watches, art, etc.)','Papers kept at home','I don’t always know where each item is']},
+q6:{t:'How do you keep track of your wealth today?',sub:'Several answers possible.',o:['I don’t really track it','I check my banking apps','A spreadsheet (Excel, Google Sheets)','A wealth-tracking app','My banker, wealth manager or fiduciary','Other']},
+q7:{t:'Have you ever struggled to find an important document when you needed it?',sub:'Deed, policy, pension certificate…',o:['Often','Sometimes','Rarely','Never']},
+q8:{t:'Have you ever asked an AI assistant a question about money, taxes or law?',sub:'ChatGPT, Claude, Gemini, etc.',o:['Yes, regularly','Yes, once or twice','No, but I’m interested','No, and I don’t trust it']},
+q9:{t:'After the presentation, how interested are you in this tool?',o:['1 – Not at all','2 – Slightly','3 – Moderately','4 – Very','5 – Extremely']},
+q10:{t:'Which features would be most useful to you?',sub:'Maximum 3.',o:['The vault: all my documents in one place','The snapshot of my wealth: what I own, what I owe','Pathways to reach my goals (purchase, retirement, succession)','An assistant that answers my questions, with its sources','A budget and expense tracking','Support during life events (marriage, birth, inheritance, divorce)','Introductions to specialists (notary, tax specialist, lawyer)','Succession planning and passing on to my loved ones']},
+q11:{t:'On what occasion would you use it first?',o:['Buying or selling a property','Marriage, birth or divorce','Inheritance or donation','Retirement planning','Getting my papers and accounts in order','Tax return','Other']},
+q12:{t:'Would you be willing to use a tool like Famylio in the next 12 months?',o:['Yes, definitely','Probably','Maybe','Probably not','No, definitely not']},
+q13:{t:'For each situation, how comfortable would you be?',sub:'To work fully, Famylio needs your documents and some personal information. Your reservations guide what we build.',rows:['Uploading my official documents (sale deed, pension certificate, contracts)','Photographing or uploading my bank statements','Having an AI read my documents to extract the figures','Answering about 20 questions on my family and financial situation','Connecting my bank accounts directly','Having my data stored online (cloud)','Asking my money questions to an AI rather than to a person']},
+q14:{t:'What are your two biggest obstacles?',sub:'Maximum 2.',o:['The security of my data (hacking)','Not knowing who has access to my information','Fear that my data is resold or used for other purposes','The time needed to import everything','The reliability of an AI’s answers','I prefer to talk to a real person','I don’t have enough wealth for it to be worthwhile','The price','Other']},
+q15:{t:'What would reassure you the most?',sub:'Maximum 3.',o:['Data hosted in Switzerland','Encryption of my documents','Being able to permanently delete my data in one click','A guarantee that my data is neither resold nor used to train an AI','Choosing myself what is imported and validating each figure before it is saved','Answers accompanied by their sources, which I can check','A security audit by an independent third party','A free trial with no commitment','Other']},
+q16:{t:'Could you start without importing anything, then add your documents later?',sub:'Only a few questions at the start, then at your own pace.',o:['Yes, that’s preferable','Yes, but I probably wouldn’t add any documents','No, without my documents the tool doesn’t interest me','I don’t know']},
+q17:{t:'What is the maximum amount you would agree to pay per month?',sub:'A subscription, no advertising and no financial product to sell. Imagine the tool does everything described.',o:['CHF 0: I wouldn’t use a paid tool','Less than CHF 5','CHF 5 – 9','CHF 10 – 14','CHF 15 – 19','CHF 20 – 29','CHF 30 or more']},
+q18:{t:'Which plan would you prefer?',o:['Monthly subscription, cancel at any time','Annual subscription with a discount','One-off payment, for life','I wouldn’t pay, whatever the plan']},
+q19:{t:'What would justify paying more?',sub:'Several answers possible.',o:['Sharing the space with my partner or family','Unlimited questions to the assistant','Introductions to specialists','Succession planning and transfer of wealth','Nothing, I prefer the lowest price']},
+q20:{t:'A comment, an expectation or a concern we haven’t covered?',sub:'Optional.'},
+q21:{t:'Would you like to be notified of the launch and try the app in preview?',sub:'Optional. Your email is only used to inform you of the launch.',o:['Yes, here is my email','No thanks']}},
+de:{
+qr:{t:'Wo leben Sie?',sub:'Mit dieser Frage können wir die Antworten nach Wohnland unterscheiden.',o:['Ich lebe in der Schweiz (unabhängig von meiner Nationalität)','Ich lebe im Ausland und habe die Schweizer Staatsbürgerschaft','Ich lebe in Frankreich','Ich lebe in einem anderen europäischen Land','Ich lebe ausserhalb Europas']},
+q1:{t:'Ihr Alter',o:['Unter 25 Jahre','25–34 Jahre','35–44 Jahre','45–54 Jahre','55–64 Jahre','65 Jahre und älter']},
+q2:{t:'Ihre Familiensituation',o:['Allein, ohne Kinder','In einer Partnerschaft, ohne Kinder','In einer Partnerschaft, mit Kind(ern)','Alleinerziehend','Andere']},
+q3:{t:'Ihre Wohnsituation',o:['Mieter(in)','Eigentümer(in) meines Hauptwohnsitzes','Eigentümer(in) mehrerer Immobilien','Kaufabsicht innerhalb von 3 Jahren']},
+q4:{t:'Ihr ungefähres Gesamtvermögen',sub:'Ersparnisse, Anlagen, Nettoimmobilien, 2. und 3. Säule. Freiwillig.',o:['Weniger als 50’000 CHF','50’000 – 200’000 CHF','200’000 – 500’000 CHF','500’000 – 1’000’000 CHF','Mehr als 1’000’000 CHF','Ich möchte nicht antworten']},
+q5:{t:'Wo befinden sich Ihre Vermögensinformationen?',sub:'Mehrere Antworten möglich.',o:['Bei mehreren Banken oder in mehreren Apps','2. Säule (Pensionskasse) und 3. Säule','Immobilien (Urkunden, Hypothek)','Versicherungen (Leben, Kranken, Hausrat usw.)','Krypto oder Online-Brokerplattformen','Wertgegenstände (Fahrzeug, Uhren, Kunst usw.)','Unterlagen, die ich zu Hause aufbewahre','Ich weiss nicht immer, wo sich was befindet']},
+q6:{t:'Wie verfolgen Sie Ihr Vermögen heute?',sub:'Mehrere Antworten möglich.',o:['Ich verfolge es nicht wirklich','Ich schaue in meine Banking-Apps','Eine Tabelle (Excel, Google Sheets)','Eine App zur Vermögensübersicht','Mein Bankberater, Vermögensverwalter oder meine Treuhandfirma','Andere']},
+q7:{t:'Hatten Sie schon einmal Mühe, ein wichtiges Dokument zu finden, als Sie es brauchten?',sub:'Urkunde, Police, Vorsorgeausweis …',o:['Oft','Manchmal','Selten','Nie']},
+q8:{t:'Haben Sie einem KI-Assistenten schon einmal eine Frage zu Geld, Steuern oder Recht gestellt?',sub:'ChatGPT, Claude, Gemini usw.',o:['Ja, regelmässig','Ja, ein- oder zweimal','Nein, aber es interessiert mich','Nein, und ich misstraue ihm']},
+q9:{t:'Wie sehr interessiert Sie dieses Tool nach der Präsentation?',o:['1 – Überhaupt nicht','2 – Wenig','3 – Mittelmässig','4 – Stark','5 – Sehr stark']},
+q10:{t:'Welche Funktionen wären für Sie am nützlichsten?',sub:'Höchstens 3.',o:['Der Tresor: alle meine Dokumente an einem Ort','Das Bild meines Vermögens: was ich besitze, was ich schulde','Wege zum Erreichen meiner Ziele (Kauf, Ruhestand, Nachlass)','Ein Assistent, der meine Fragen mit Quellen beantwortet','Ein Budget und die Verfolgung meiner Ausgaben','Begleitung bei Lebensereignissen (Heirat, Geburt, Erbschaft, Scheidung)','Vermittlung von Spezialisten (Notar, Steuerexperte, Anwalt)','Die Nachlassplanung und die Weitergabe an meine Liebsten']},
+q11:{t:'Bei welcher Gelegenheit würden Sie es zuerst nutzen?',o:['Kauf oder Verkauf einer Immobilie','Heirat, Geburt oder Scheidung','Erbschaft oder Schenkung','Vorbereitung des Ruhestands','Ordnung in meine Unterlagen und Konten bringen','Steuererklärung','Andere']},
+q12:{t:'Wären Sie bereit, ein Tool wie Famylio in den nächsten 12 Monaten zu nutzen?',o:['Ja, bestimmt','Wahrscheinlich','Vielleicht','Wahrscheinlich nicht','Nein, bestimmt nicht']},
+q13:{t:'Wie wohl würden Sie sich in der jeweiligen Situation fühlen?',sub:'Um voll zu funktionieren, braucht Famylio Ihre Dokumente und einige persönliche Angaben. Ihre Vorbehalte bestimmen, was wir bauen.',rows:['Meine amtlichen Dokumente hochladen (Kaufvertrag, Vorsorgeausweis, Verträge)','Meine Kontoauszüge fotografieren oder hochladen','Dass eine KI meine Dokumente liest, um die Zahlen zu extrahieren','Etwa 20 Fragen zu meiner Familien- und Vermögenssituation beantworten','Meine Bankkonten direkt verbinden','Dass meine Daten online (Cloud) gespeichert werden','Meine Geldfragen einer KI statt einer Person stellen']},
+q14:{t:'Was sind Ihre zwei grössten Hindernisse?',sub:'Höchstens 2.',o:['Die Sicherheit meiner Daten (Hackerangriffe)','Nicht zu wissen, wer Zugriff auf meine Informationen hat','Die Befürchtung, dass meine Daten weiterverkauft oder anderweitig verwendet werden','Der Zeitaufwand für den Import','Die Zuverlässigkeit der Antworten einer KI','Ich spreche lieber mit einer echten Person','Mein Vermögen ist zu klein, als dass es sich lohnt','Der Preis','Andere']},
+q15:{t:'Was würde Sie am meisten beruhigen?',sub:'Höchstens 3.',o:['In der Schweiz gehostete Daten','Verschlüsselung meiner Dokumente','Meine Daten mit einem Klick endgültig löschen können','Die Garantie, dass meine Daten weder weiterverkauft noch zum Training einer KI verwendet werden','Selbst wählen, was importiert wird, und jede Zahl bestätigen, bevor sie gespeichert wird','Antworten mit Quellen, die ich überprüfen kann','Ein Sicherheitsaudit durch eine unabhängige Stelle','Eine kostenlose, unverbindliche Testphase','Andere']},
+q16:{t:'Könnten Sie zunächst ohne Import starten und Ihre Dokumente später hinzufügen?',sub:'Zu Beginn nur wenige Fragen, danach in Ihrem Tempo.',o:['Ja, das wäre mir lieber','Ja, aber ich würde wahrscheinlich keine Dokumente hinzufügen','Nein, ohne meine Dokumente interessiert mich das Tool nicht','Ich weiss nicht']},
+q17:{t:'Welchen Höchstbetrag würden Sie pro Monat zu zahlen bereit sein?',sub:'Ein Abonnement, ohne Werbung und ohne Finanzprodukt zu verkaufen. Stellen Sie sich vor, das Tool leistet alles Beschriebene.',o:['0 CHF: Ich würde kein kostenpflichtiges Tool nutzen','Weniger als 5 CHF','5 – 9 CHF','10 – 14 CHF','15 – 19 CHF','20 – 29 CHF','30 CHF oder mehr']},
+q18:{t:'Welches Modell würden Sie bevorzugen?',o:['Monatsabo, jederzeit kündbar','Jahresabo mit Rabatt','Einmalzahlung, lebenslang','Ich würde unabhängig vom Modell nicht zahlen']},
+q19:{t:'Was würde einen höheren Preis rechtfertigen?',sub:'Mehrere Antworten möglich.',o:['Den Bereich mit meinem Partner oder meiner Familie teilen','Unbegrenzte Fragen an den Assistenten','Die Vermittlung von Spezialisten','Die Nachlassplanung und Vermögensübertragung','Nichts, ich bevorzuge den tiefsten Preis']},
+q20:{t:'Ein Kommentar, eine Erwartung oder eine Sorge, die wir nicht angesprochen haben?',sub:'Freiwillig.'},
+q21:{t:'Möchten Sie über den Start informiert werden und die App vorab testen?',sub:'Freiwillig. Ihre E-Mail-Adresse dient nur dazu, Sie über den Start zu informieren.',o:['Ja, hier ist meine E-Mail-Adresse','Nein danke']}}
+};
+const UI={
+fr:{title:'Sondage Famylio',surveyName:'Sondage Famylio',introH:'Dites-nous ce que vous en pensez.',introLead:'Il n’y a pas de bonne ou de mauvaise réponse. Vous pouvez passer toute question qui ne vous parle pas.',nQ:n=>n+' questions',about5:'environ 5 minutes',anon:'anonyme',start:'Commencer',prev:'Précédent',next:'Suivant',skip:'Passer',send:'Envoyer mes réponses',send2:'Envoyer',qOf:(i,n)=>'Question '+i+' sur '+n,specify:'Précisez',yourAnswer:'Votre réponse',maxN:n=>'Maximum '+n+' réponses. Décochez-en une pour changer.',gridDone:(d,n)=>d+' sur '+n+' situations notées',mailBad:'Cette adresse e-mail ne semble pas valide.',mailPh:'prenom@exemple.ch',thanks:'Merci pour votre temps.',saving:'Nous enregistrons vos réponses…',failMsg:'Vos réponses n’ont pas pu être enregistrées. Vous pouvez réessayer ou les copier pour nous les envoyer.',retry:'Réessayer',copy:'Copier mes réponses',copied:'Copié',copyFail:'Copie impossible',retrying:'Nouvelle tentative…',failAgain:'L’enregistrement a encore échoué. Réessayez dans un instant.',okMsg:'Vos réponses sont enregistrées. Elles nous aident à décider ce que Famylio doit devenir.',langLabel:'Langue'},
+en:{title:'Famylio survey',surveyName:'Famylio survey',introH:'Tell us what you think.',introLead:'There are no right or wrong answers. You can skip any question that doesn’t speak to you.',nQ:n=>n+' questions',about5:'about 5 minutes',anon:'anonymous',start:'Start',prev:'Back',next:'Next',skip:'Skip',send:'Submit my answers',send2:'Submit',qOf:(i,n)=>'Question '+i+' of '+n,specify:'Please specify',yourAnswer:'Your answer',maxN:n=>'Maximum '+n+' answers. Untick one to change.',gridDone:(d,n)=>d+' of '+n+' situations rated',mailBad:'This email address doesn’t look valid.',mailPh:'firstname@example.com',thanks:'Thank you for your time.',saving:'Saving your answers…',failMsg:'Your answers could not be saved. You can try again or copy them and send them to us.',retry:'Try again',copy:'Copy my answers',copied:'Copied',copyFail:'Copy failed',retrying:'Trying again…',failAgain:'Saving failed again. Please try again in a moment.',okMsg:'Your answers have been saved. They help us decide what Famylio should become.',langLabel:'Language'},
+de:{title:'Famylio-Umfrage',surveyName:'Famylio-Umfrage',introH:'Sagen Sie uns, was Sie denken.',introLead:'Es gibt keine richtigen oder falschen Antworten. Sie können jede Frage überspringen, die Sie nicht anspricht.',nQ:n=>n+' Fragen',about5:'etwa 5 Minuten',anon:'anonym',start:'Starten',prev:'Zurück',next:'Weiter',skip:'Überspringen',send:'Antworten senden',send2:'Senden',qOf:(i,n)=>'Frage '+i+' von '+n,specify:'Bitte präzisieren',yourAnswer:'Ihre Antwort',maxN:n=>'Höchstens '+n+' Antworten. Entfernen Sie eine Auswahl, um zu ändern.',gridDone:(d,n)=>d+' von '+n+' Situationen bewertet',mailBad:'Diese E-Mail-Adresse scheint ungültig zu sein.',mailPh:'vorname@beispiel.ch',thanks:'Vielen Dank für Ihre Zeit.',saving:'Ihre Antworten werden gespeichert …',failMsg:'Ihre Antworten konnten nicht gespeichert werden. Sie können es erneut versuchen oder sie kopieren und uns senden.',retry:'Erneut versuchen',copy:'Meine Antworten kopieren',copied:'Kopiert',copyFail:'Kopieren nicht möglich',retrying:'Neuer Versuch …',failAgain:'Das Speichern ist erneut fehlgeschlagen. Bitte versuchen Sie es gleich noch einmal.',okMsg:'Ihre Antworten wurden gespeichert. Sie helfen uns zu entscheiden, was Famylio werden soll.',langLabel:'Sprache'}
+};
+const PAGE={
+en:{'Le sondage':'The survey','Famylio · family office numérique':'Famylio · digital family office','Les grandes fortunes ont un bureau qui veille sur tout ce qu’elles possèdent.':'The wealthy have an office that watches over everything they own.','Famylio, c’est le vôtre.':'Famylio is yours.','Le film de présentation, 1 min 22':'The presentation film, 1 min 22 (in French)','Données fictives, à titre d’illustration':'Fictional data, for illustration','Un seul endroit pour tout comprendre':'One place to understand it all','Un acte chez le notaire, une police d’assurance dans un tiroir, un 3e pilier à la banque, de l’immobilier, des placements. Famylio réunit tout cela et vous aide à le comprendre.':'A deed at the notary, an insurance policy in a drawer, a 3rd pillar at the bank, real estate, investments. Famylio brings it all together and helps you understand it.','Un coffre-fort':'A vault','Vos documents officiels classés au même endroit, et lus pour en extraire les chiffres clés.':'Your official documents filed in one place, and read to extract the key figures.','Une photo de votre patrimoine':'A snapshot of your wealth','Ce que vous possédez, ce que vous devez, vos points forts et vos points faibles, en un coup d’œil.':'What you own, what you owe, your strengths and weaknesses, at a glance.','Vos objectifs, plusieurs chemins':'Your goals, several paths','Acheter, transmettre, préparer la retraite. Plusieurs pistes avec leurs avantages et leurs limites. Vous choisissez.':'Buy, pass on, prepare for retirement. Several options with their advantages and limits. You choose.','Un assistant':'An assistant','Posez vos questions en langage naturel et obtenez une réponse avec ses sources.':'Ask your questions in plain language and get an answer with its sources.','Notre vision':'Our vision','Ce que les grandes fortunes obtiennent d’un family office doit être accessible à chacun.':'What the wealthy get from a family office should be accessible to everyone.','Aucun produit à vendre':'No product to sell','Vous payez un abonnement, rien d’autre. Aucun conflit d’intérêt.':'You pay a subscription, nothing else. No conflict of interest.','Vous gardez la main':'You stay in control','Rien n’est intégré sans votre accord, et chaque chiffre est explicable.':'Nothing is imported without your consent, and every figure can be explained.','Votre avis, en 5 minutes':'Your opinion, in 5 minutes','Dites-nous si Famylio répondrait à un vrai besoin, et ce qui pourrait vous freiner.':'Tell us whether Famylio would meet a real need, and what might hold you back.','Famylio · conçu à Lausanne. Vos réponses sont traitées de façon confidentielle et servent uniquement à cette étude.':'Famylio · designed in Lausanne. Your answers are treated confidentially and used only for this study.'},
+de:{'Le sondage':'Die Umfrage','Famylio · family office numérique':'Famylio · digitales Family Office','Les grandes fortunes ont un bureau qui veille sur tout ce qu’elles possèdent.':'Grosse Vermögen haben ein Büro, das über alles wacht, was sie besitzen.','Famylio, c’est le vôtre.':'Famylio ist Ihres.','Le film de présentation, 1 min 22':'Der Präsentationsfilm, 1 Min. 22 (auf Französisch)','Données fictives, à titre d’illustration':'Fiktive Daten, zur Veranschaulichung','Un seul endroit pour tout comprendre':'Ein Ort, um alles zu verstehen','Un acte chez le notaire, une police d’assurance dans un tiroir, un 3e pilier à la banque, de l’immobilier, des placements. Famylio réunit tout cela et vous aide à le comprendre.':'Eine Urkunde beim Notar, eine Police in der Schublade, eine 3. Säule bei der Bank, Immobilien, Anlagen. Famylio führt alles zusammen und hilft Ihnen, es zu verstehen.','Un coffre-fort':'Ein Tresor','Vos documents officiels classés au même endroit, et lus pour en extraire les chiffres clés.':'Ihre amtlichen Dokumente an einem Ort abgelegt und gelesen, um die Kennzahlen zu extrahieren.','Une photo de votre patrimoine':'Ein Bild Ihres Vermögens','Ce que vous possédez, ce que vous devez, vos points forts et vos points faibles, en un coup d’œil.':'Was Sie besitzen, was Sie schulden, Ihre Stärken und Schwächen auf einen Blick.','Vos objectifs, plusieurs chemins':'Ihre Ziele, mehrere Wege','Acheter, transmettre, préparer la retraite. Plusieurs pistes avec leurs avantages et leurs limites. Vous choisissez.':'Kaufen, weitergeben, den Ruhestand vorbereiten. Mehrere Wege mit ihren Vor- und Nachteilen. Sie entscheiden.','Un assistant':'Ein Assistent','Posez vos questions en langage naturel et obtenez une réponse avec ses sources.':'Stellen Sie Ihre Fragen in natürlicher Sprache und erhalten Sie eine Antwort mit Quellen.','Notre vision':'Unsere Vision','Ce que les grandes fortunes obtiennent d’un family office doit être accessible à chacun.':'Was grosse Vermögen von einem Family Office erhalten, soll für alle zugänglich sein.','Aucun produit à vendre':'Kein Produkt zu verkaufen','Vous payez un abonnement, rien d’autre. Aucun conflit d’intérêt.':'Sie zahlen ein Abonnement, sonst nichts. Kein Interessenkonflikt.','Vous gardez la main':'Sie behalten die Kontrolle','Rien n’est intégré sans votre accord, et chaque chiffre est explicable.':'Nichts wird ohne Ihre Zustimmung übernommen, und jede Zahl ist nachvollziehbar.','Votre avis, en 5 minutes':'Ihre Meinung in 5 Minuten','Dites-nous si Famylio répondrait à un vrai besoin, et ce qui pourrait vous freiner.':'Sagen Sie uns, ob Famylio einem echten Bedürfnis entspräche und was Sie zögern lassen könnte.','Famylio · conçu à Lausanne. Vos réponses sont traitées de façon confidentielle et servent uniquement à cette étude.':'Famylio · entwickelt in Lausanne. Ihre Antworten werden vertraulich behandelt und dienen ausschliesslich dieser Studie.'}
+};
+let lang='fr';
+const tr=(k,...a)=>{const v=UI[lang][k];return typeof v==='function'?v(...a):v};
+const Q0=Q.map(q=>({part:q.part,t:q.t,sub:q.sub,o:q.o&&q.o.slice(),rows:q.rows&&q.rows.slice()}));
+const pageNodes=[];
+(function(){
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+  while(n=w.nextNode()){
+    const p=n.parentElement;if(!p||/^(SCRIPT|STYLE)$/.test(p.tagName)||p.closest('#survey')||p.closest('.langsw'))continue;
+    const k=n.nodeValue.trim();if(k&&PAGE.en[k]!=null)pageNodes.push({n,k,raw:n.nodeValue});
+  }
+})();
+function applyLang(){
+  Q.forEach((q,i)=>{const b=Q0[i],l=(QT[lang]||{})[q.k]||{};
+    q.part=lang==='fr'?b.part:(PARTS[lang][b.part]||b.part);
+    q.t=l.t||b.t;q.sub=l.sub!==undefined?l.sub:b.sub;
+    if(b.o)q.o=l.o||b.o;if(b.rows)q.rows=l.rows||b.rows});
+  SCALE.length=0;SCALES[lang].forEach(x=>SCALE.push(x));
+  pageNodes.forEach(o=>{const t=lang==='fr'?o.k:PAGE[lang][o.k];o.n.nodeValue=o.raw.replace(o.k,t)});
+  document.documentElement.lang=lang;document.title=tr('title');
+  document.querySelectorAll('.langsw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
+}
+function setLang(l){
+  if(!LANGS.includes(l)||l===lang)return;
+  lang=l;try{localStorage.setItem('famylio_lang',l)}catch(e){}
+  applyLang();
+  if(cur>=0){const k=Q[cur].k;flush();S.visits[k]=Math.max(0,(S.visits[k]||1)-1);go(S.i,'fwd')}
+  else if(S.i<0)renderIntro();
+  else if(S.status==='complete'){const m=$('#thMsg');if(m&&!saveErr){const h=$('.thanks h3');if(h)h.textContent=tr('thanks');m.textContent=tr('okMsg')}}
+}
+(function(){
+  let l=null;const qs=new URLSearchParams(location.search).get('lang');
+  if(qs&&LANGS.includes(qs.toLowerCase()))l=qs.toLowerCase();
+  if(!l){try{const s=localStorage.getItem('famylio_lang');if(LANGS.includes(s))l=s}catch(e){}}
+  if(!l){const n=(navigator.language||'fr').slice(0,2).toLowerCase();l=n==='de'?'de':n==='en'?'en':'fr'}
+  window.__initLang=l;
+})();
+
 
 /* ---------- État du sondage ---------- */
 const FORM_ACTION='https://docs.google.com/forms/d/e/1FAIpQLScOSvMThKSs2alpPyTmU5Aeszqnf4VG7pcpMoMVFnP0wmSO4w/formResponse',FORM_ENTRY='entry.1925632365';
@@ -338,7 +445,7 @@ window.addEventListener('pagehide',()=>{flush();if(S.id&&S.status==='partial')sa
 function payload(){
   const act=Object.values(S.times).reduce((a,b)=>a+b,0);
   return {sid:S.id,status:S.status,source:S.mode,src:SRC,startedAt:S.t0,updatedAt:Date.now(),completedAt:S.doneAt||null,
-    activeMs:act,vid:Math.round(vMax*100),vplays:vPlays,device:innerWidth<760?'mobile':'ordinateur',
+    activeMs:act,vid:Math.round(vMax*100),vplays:vPlays,device:innerWidth<760?'mobile':'ordinateur',lang:lang,
     lastQ:S.maxI,answers:S.answers,times:S.times,visits:S.visits,changes:S.changes};
 }
 async function save(){
@@ -361,12 +468,12 @@ function renderIntro(){
   const blocked=FORM_ACTION.indexOf('__')===0;
   stage.innerHTML=`<div class="qwrap intro">
     ${S.mode==='papier'?'<div class="banner">Mode saisie papier : les temps ne sont pas enregistrés. Chaque questionnaire saisi apparaît dans le tableau de bord avec la source « papier ».</div>':''}
-    <p class="qmeta"><span class="qpart">Sondage Famylio</span></p>
-    <h3>Dites-nous ce que vous en pensez.</h3>
-    <p class="lead">Il n’y a pas de bonne ou de mauvaise réponse. Vous pouvez passer toute question qui ne vous parle pas.</p>
-    <div class="facts"><span>${Q.length} questions</span><span>environ 5 minutes</span><span>anonyme</span></div>
+    <p class="qmeta"><span class="qpart">${tr('surveyName')}</span></p>
+    <h3>${tr('introH')}</h3>
+    <p class="lead">${tr('introLead')}</p>
+    <div class="facts"><span>${tr('nQ',Q.length)}</span><span>${tr('about5')}</span><span>${tr('anon')}</span></div>
     ${blocked?`<div class="banner">Ce sondage enregistre les réponses via claude.ai. Ouvrez-le depuis le lien d’invitation en étant connecté(e), ou répondez sur la version papier.</div>`:''}
-    <div class="nav"><span></span><button class="btn" id="goBtn" ${blocked?'disabled':''}>Commencer</button></div>
+    <div class="nav"><span></span><button class="btn" id="goBtn" ${blocked?'disabled':''}>${tr('start')}</button></div>
   </div>`;
   $('#goBtn').onclick=()=>{
     S.id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).replace(/[^a-zA-Z0-9-]/g,'');
@@ -379,7 +486,7 @@ function optHTML(q){
   const a=S.answers[q.k];
   const multi=q.type==='multi';
   const sel=multi?(a||[]):(a==null?[]:[a]);
-  const other=q.other!=null?`<input class="field" id="otherTxt" maxlength="120" placeholder="Précisez" value="${esc(S.answers[q.k+'_o']||'')}" ${sel.includes(q.other)?'':'hidden'}>`:'';
+  const other=q.other!=null?`<input class="field" id="otherTxt" maxlength="120" placeholder="${tr('specify')}" value="${esc(S.answers[q.k+'_o']||'')}" ${sel.includes(q.other)?'':'hidden'}>`:'';
   return `<div class="opts ${q.o.length>=5&&q.type!=='contact'&&q.o.every(x=>x.length<46)?'two':''} ${multi?'multi':''}" role="${multi?'group':'radiogroup'}">${
     q.o.map((t,i)=>`<label class="opt"><input type="${multi?'checkbox':'radio'}" name="${q.k}" value="${i}" ${sel.includes(i)?'checked':''}><span class="box"></span><span class="ot">${esc(t)}</span></label>`).join('')
   }</div>${other}`;
@@ -394,7 +501,7 @@ function gridHTML(q){
 function contactHTML(q){
   const a=S.answers[q.k]||{};
   return `<div class="opts"><label class="opt"><input type="radio" name="q21" value="0" ${a.c===0?'checked':''}><span class="box"></span><span class="ot">${q.o[0]}</span></label><label class="opt"><input type="radio" name="q21" value="1" ${a.c===1?'checked':''}><span class="box"></span><span class="ot">${q.o[1]}</span></label></div>
-  <input class="field" id="mail" type="email" autocomplete="email" inputmode="email" placeholder="prenom@exemple.ch" value="${esc(a.e||'')}" ${a.c===0?'':'hidden'}>`;
+  <input class="field" id="mail" type="email" autocomplete="email" inputmode="email" placeholder="${tr('mailPh')}" value="${esc(a.e||'')}" ${a.c===0?'':'hidden'}>`;
 }
 
 function go(i,dir){
@@ -405,28 +512,28 @@ function go(i,dir){
   let body='';
   if(q.type==='single'||q.type==='multi')body=optHTML(q);
   else if(q.type==='grid')body=gridHTML(q);
-  else if(q.type==='text')body=`<textarea class="field" id="txt" maxlength="1500" placeholder="Votre réponse">${esc(S.answers[q.k]||'')}</textarea>`;
+  else if(q.type==='text')body=`<textarea class="field" id="txt" maxlength="1500" placeholder="${tr('yourAnswer')}">${esc(S.answers[q.k]||'')}</textarea>`;
   else body=contactHTML(q);
   const last=i===Q.length-1;
   stage.innerHTML=`<div class="qwrap ${dir==='back'?'back':''}">
     ${S.mode==='papier'?'<div class="banner">Saisie papier</div>':''}
-    <div class="qmeta"><span class="qpart">${esc(q.part)}</span><span class="num">Question ${i+1} sur ${Q.length}</span></div>
+    <div class="qmeta"><span class="qpart">${esc(q.part)}</span><span class="num">${tr('qOf',i+1,Q.length)}</span></div>
     <h3 class="qt">${esc(q.t)}</h3>${q.sub?`<p class="qs">${esc(q.sub)}</p>`:''}
     ${body}<p class="note" id="note" aria-live="polite"></p>
-    <div class="nav"><button class="btn ghost" id="prevBtn" ${i===0?'disabled':''}>Précédent</button><button class="btn" id="nextBtn"></button></div>
+    <div class="nav"><button class="btn ghost" id="prevBtn" ${i===0?'disabled':''}>${tr('prev')}</button><button class="btn" id="nextBtn"></button></div>
   </div>`;
   setProg();updNext();
   tStart=performance.now();
   $('#prevBtn').onclick=()=>go(i-1,'back');
   $('#nextBtn').onclick=()=>{
-    if(q.type==='contact'){const a=S.answers.q21;if(a&&a.c===0&&a.e&&!/^\S+@\S+\.\S+$/.test(a.e)){note('Cette adresse e-mail ne semble pas valide.',true);return}}
+    if(q.type==='contact'){const a=S.answers.q21;if(a&&a.c===0&&a.e&&!/^\S+@\S+\.\S+$/.test(a.e)){note(tr('mailBad'),true);return}}
     advance(i)};
     if(S.i>0){const sv=$('#survey').getBoundingClientRect();if(sv.top<0)$('#survey').scrollIntoView({block:'start',behavior:'smooth'})}
 }
 function note(t,w){const n=$('#note');if(n){n.textContent=t;n.classList.toggle('warn',!!w)}}
 function updNext(){
   const q=Q[S.i],b=$('#nextBtn');if(!b)return;
-  b.textContent=S.i===Q.length-1?(hasAns(q.k)?'Envoyer mes réponses':'Envoyer'):(hasAns(q.k)?'Suivant':'Passer');
+  b.textContent=S.i===Q.length-1?(hasAns(q.k)?tr('send'):tr('send2')):(hasAns(q.k)?tr('next'):tr('skip'));
 }
 let autoT=0;
 function advance(i){
@@ -451,12 +558,12 @@ stage.addEventListener('change',e=>{
     if(q.other==null||+t.value!==q.other){clearTimeout(autoT);autoT=setTimeout(()=>{if(S.i===QI[q.k])advance(S.i)},480)}
   }else if(q.type==='multi'){
     const cs=[...stage.querySelectorAll('input[name="'+q.k+'"]:checked')].map(x=>+x.value);
-    if(q.max&&cs.length>q.max){t.checked=false;note('Maximum '+q.max+' réponses. Décochez-en une pour changer.',true);return}
+    if(q.max&&cs.length>q.max){t.checked=false;note(tr('maxN',q.max),true);return}
     note('');setAns(q,cs.sort((a,b)=>a-b));
     const ot=$('#otherTxt');if(ot){ot.hidden=!cs.includes(q.other)}
   }else if(q.type==='grid'){
     const a={...(S.answers[q.k]||{})};a[t.name]=+t.value;setAns(q,a);
-    const done=Object.keys(a).length;note(done<q.rows.length?done+' sur '+q.rows.length+' situations notées':'');
+    const done=Object.keys(a).length;note(done<q.rows.length?tr('gridDone',done,q.rows.length):'');
   }else if(q.type==='contact'){
     const a={...(S.answers[q.k]||{}),c:+t.value};if(a.c===1)delete a.e;setAns(q,a);
     const m=$('#mail');m.hidden=a.c!==0;if(!m.hidden)m.focus();
@@ -471,18 +578,18 @@ stage.addEventListener('input',e=>{
 
 async function finish(){
   flush();cur=-1;S.i=Q.length;S.status='complete';S.doneAt=Date.now();setProg();bar.style.width='100%';
-  stage.innerHTML=`<div class="thanks qwrap"><svg class="tick" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="40"/><path d="M26 43l11 11 21-24"/></svg><h3>Merci pour votre temps.</h3><p class="lead" style="margin-inline:auto" id="thMsg">Nous enregistrons vos réponses…</p><div class="nav" style="justify-content:center" id="thAct"></div></div>`;
+  stage.innerHTML=`<div class="thanks qwrap"><svg class="tick" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="40"/><path d="M26 43l11 11 21-24"/></svg><h3>${tr('thanks')}</h3><p class="lead" style="margin-inline:auto" id="thMsg">${tr('saving')}</p><div class="nav" style="justify-content:center" id="thAct"></div></div>`;
   await save();
   const msg=$('#thMsg'),act=$('#thAct');if(!msg)return;
   if(saveErr){
-    msg.textContent='Vos réponses n’ont pas pu être enregistrées. Vous pouvez réessayer ou les copier pour nous les envoyer.';
-    act.innerHTML='<button class="btn" id="retry">Réessayer</button><button class="btn ghost" id="copyA">Copier mes réponses</button>';
-    $('#retry').onclick=async()=>{msg.textContent='Nouvelle tentative…';await save();finish2()};
-    $('#copyA').onclick=async()=>{const txt=JSON.stringify(S.answers);try{await navigator.clipboard.writeText(txt);$('#copyA').textContent='Copié'}catch(e){$('#copyA').textContent='Copie impossible'}};
+    msg.textContent=tr('failMsg');
+    act.innerHTML='<button class="btn" id="retry">'+tr('retry')+'</button><button class="btn ghost" id="copyA">'+tr('copy')+'</button>';
+    $('#retry').onclick=async()=>{msg.textContent=tr('retrying');await save();finish2()};
+    $('#copyA').onclick=async()=>{const txt=JSON.stringify(S.answers);try{await navigator.clipboard.writeText(txt);$('#copyA').textContent=tr('copied')}catch(e){$('#copyA').textContent=tr('copyFail')}};
   }else finish2();
   function finish2(){
-    if(saveErr){msg.textContent='L’enregistrement a encore échoué. Réessayez dans un instant.';return}
-    msg.textContent=S.mode==='papier'?'Réponse papier enregistrée.':'Vos réponses sont enregistrées. Elles nous aident à décider ce que Famylio doit devenir.';
+    if(saveErr){msg.textContent=tr('failAgain');return}
+    msg.textContent=S.mode==='papier'?'Réponse papier enregistrée.':tr('okMsg');
     if(S.mode==='papier'){act.innerHTML='<button class="btn" id="again">Saisir une autre réponse</button><button class="btn ghost" id="backDash">Retour au tableau de bord</button>';
       $('#again').onclick=()=>{resetSurvey('papier');renderIntro();$('#goBtn').click()};$('#backDash').onclick=()=>showDash(true)}
     else act.innerHTML='';
@@ -510,6 +617,7 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(!t||!matchMedia('(hover:none)').matches)return;tip.textContent=t.getAttribute('data-tip');tip.style.opacity=1;tip.style.left='16px';tip.style.top=(e.clientY+16)+'px';setTimeout(()=>tip.style.opacity=0,2200)});
 
 /* ---------- Démarrage ---------- */
+lang=window.__initLang||'fr';applyLang();document.querySelectorAll('.langsw button').forEach(b=>b.onclick=()=>setLang(b.dataset.l));
 reveals();renderIntro();
 })();
 </script>
