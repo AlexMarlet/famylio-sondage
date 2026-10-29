@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sondage Famylio</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Un family office numérique pour la Suisse : une vue à 360° de votre patrimoine, vos options, vos documents. Répondez au sondage (5 min, anonyme).">
@@ -242,6 +244,57 @@ svg.ch .hit{fill:transparent}
 .quote{padding:12px 14px;border-radius:12px;background:var(--surface2);font-size:.9rem;margin-bottom:8px;overflow-wrap:anywhere}
 .quote small{display:block;color:var(--muted);margin-top:4px}
 #tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:8px;font-size:.8rem;max-width:280px;opacity:0;transition:opacity .12s;box-shadow:0 8px 20px -8px var(--shadow)}
+
+/* ===== Téléphone : règles réservées aux petits écrans. Le rendu ordinateur n'est pas modifié. ===== */
+@media (hover:none){
+  .opt:hover{transform:none}
+  .opt:hover:not(:has(input:checked)){border-color:var(--line)}
+  .gp:hover span{border-color:var(--line)}
+  .gp input:checked + span{border-color:var(--sage)}
+  .card:hover{transform:none}
+  .btn:hover{transform:none;box-shadow:none}
+}
+@media (max-width:640px){
+  .top-in{padding-block:8px;gap:8px}
+  .logo{font-size:1.35rem}
+  .navlink{padding:8px 6px;font-size:.85rem}
+  .langsw button{padding:6px 10px}
+  .hero{padding-block:22px 10px}
+  h1{margin:10px 0 16px}
+  .rule{margin-bottom:20px}
+  .player{border-radius:14px}
+  .cap{margin-top:10px;font-size:.8rem}
+  .sec{padding-block:34px 4px}
+  .cards{gap:12px;margin-top:22px}
+  .card{padding:16px 18px;display:grid;grid-template-columns:34px 1fr;column-gap:14px;align-items:start}
+  .card svg{margin:2px 0 0;grid-row:1 / span 2}
+  .card h3{margin:0 0 4px;font-size:1.1rem}
+  .vision{margin-top:18px;gap:8px}
+  #survey{scroll-margin-top:60px}
+  .survey{overflow:clip;border-radius:20px;margin-top:22px}
+  .prog{position:sticky;top:52px;z-index:20}
+  .sv-body{padding:20px 16px 0;min-height:380px}
+  .qmeta{font-size:.72rem;letter-spacing:.08em;margin-bottom:10px}
+  .opts{gap:8px;margin-top:16px}
+  .opt{padding:14px;gap:12px}
+  .gscale{gap:5px}
+  .gp span{padding:12px 0}
+  .field{padding:14px}
+  .nav{position:sticky;bottom:0;z-index:15;margin:0 -16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+  .nav .btn{padding:13px 22px;min-width:116px}
+  .thanks .nav{position:static;margin:0;padding:10px 0 0;border:0;background:none}
+  #thAct:empty{display:none}
+  .facts span{font-size:.84rem}
+  .thanks{padding:12px 0 28px}
+  footer{padding-block:32px 40px}
+}
+@media (max-width:640px) and (max-height:520px){.nav{position:static}.prog{top:0}}
+@media (max-width:360px){
+  .logo{font-size:1.2rem}
+  .navlink{display:none}
+  .sv-body{padding-inline:14px}
+  .nav{margin-inline:-14px;padding-inline:14px}
+}
 </style>
 
 <div class="aurora" aria-hidden="true"><i></i><i></i></div>
